@@ -44,13 +44,14 @@ class MyTestCase(unittest.TestCase):
 
     def test_guess_word_miss(self):
         game = HangmanGame('Hello')
-        guess_successful = game.guess_word('hallo')
-        self.assertFalse(guess_successful)
+        game.guess('hallo')
+        state = game.state()
+        self.assertEqual(GameState.RUNNING, state)
         self.assertEqual(game.allowed_misses - 1, game.remaining_guesses())
 
     def test_guess_word_hit(self):
         game = HangmanGame('Hello')
-        guess_successful = game.guess_word('hello')
+        guess_successful = game.guess('hello')
         self.assertTrue(guess_successful)
         self.assertEqual(game.allowed_misses, game.remaining_guesses())
 
@@ -73,7 +74,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_game_over_word_guess(self):
         game = HangmanGame('Hello')
-        game.guess_word('HELLO')
+        game.guess('HELLO')
         self.assertTrue(game.is_over())
 
     def test_game_over_too_many_misses(self):
@@ -92,13 +93,20 @@ class MyTestCase(unittest.TestCase):
 
     def test_game_state_won(self):
         game = HangmanGame('Hello')
-        game.guess_word('HELLO')
+        game.guess('HELLO')
+        self.assertEqual(GameState.WON, game.state())
+
+    def test_game_won_by_character_guess(self):
+        game = HangmanGame('you')
+        game.guess('u')
+        game.guess('y')
+        game.guess('o')
         self.assertEqual(GameState.WON, game.state())
 
     def test_game_state_lost(self):
         game = HangmanGame('Hello', 0)
         self.assertEqual(GameState.RUNNING, game.state())
-        game.guess_word('HELLa')
+        game.guess('HELLa')
         self.assertEqual(GameState.LOST, game.state())
 
     def test_visual_state_init(self):
@@ -109,9 +117,6 @@ class MyTestCase(unittest.TestCase):
         game = HangmanGame('Hello', 10)
         game.guess('a')
         self.assertEqual('_____\nØOOOOOOOOO', game.visual_state())
-
-
-
 
 
 if __name__ == '__main__':
