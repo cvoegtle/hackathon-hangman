@@ -1,5 +1,5 @@
 import unittest
-from hangman import Hangman
+from hangman import Hangman, GameState
 from hangman import HangmanGame
 
 
@@ -46,21 +46,21 @@ class MyTestCase(unittest.TestCase):
         game = HangmanGame('Hello')
         guess_successful = game.guess_word('hallo')
         self.assertFalse(guess_successful)
-        self.assertEqual(game.allowed_guesses-1, game.remaining_guesses())
+        self.assertEqual(game.allowed_misses - 1, game.remaining_guesses())
 
     def test_guess_word_hit(self):
         game = HangmanGame('Hello')
         guess_successful = game.guess_word('hello')
         self.assertTrue(guess_successful)
-        self.assertEqual(game.allowed_guesses, game.remaining_guesses())
+        self.assertEqual(game.allowed_misses, game.remaining_guesses())
 
     def test_remaining_guesses(self):
         game = HangmanGame('Hello')
-        self.assertEqual(game.allowed_guesses, game.remaining_guesses())
+        self.assertEqual(game.allowed_misses, game.remaining_guesses())
         game.guess('e')
-        self.assertEqual(game.allowed_guesses, game.remaining_guesses())
+        self.assertEqual(game.allowed_misses, game.remaining_guesses())
         game.guess('a')
-        self.assertEqual(game.allowed_guesses-1, game.remaining_guesses())
+        self.assertEqual(game.allowed_misses - 1, game.remaining_guesses())
 
     def test_game_over(self):
         game = HangmanGame('Hello')
@@ -85,6 +85,30 @@ class MyTestCase(unittest.TestCase):
         self.assertFalse(game.is_over())
         game.guess('f')
         self.assertTrue(game.is_over())
+
+    def test_game_state_running(self):
+        game = HangmanGame('Hello', 5)
+        self.assertEqual(GameState.RUNNING, game.state())
+
+    def test_game_state_won(self):
+        game = HangmanGame('Hello')
+        game.guess_word('HELLO')
+        self.assertEqual(GameState.WON, game.state())
+
+    def test_game_state_lost(self):
+        game = HangmanGame('Hello', 0)
+        self.assertEqual(GameState.RUNNING, game.state())
+        game.guess_word('HELLa')
+        self.assertEqual(GameState.LOST, game.state())
+
+    def test_visual_state_init(self):
+        game = HangmanGame('Hello', 10)
+        self.assertEqual('_____\nOOOOOOOOOO', game.visual_state())
+
+    def test_visual_state_running(self):
+        game = HangmanGame('Hello', 10)
+        game.guess('a')
+        self.assertEqual('_____\nØOOOOOOOOO', game.visual_state())
 
 
 

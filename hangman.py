@@ -1,3 +1,5 @@
+from enum import Enum
+
 PLACE_HOLDER = '_'
 
 class Hangman:
@@ -27,19 +29,26 @@ class Hangman:
             return PLACE_HOLDER
 
 
+class GameState(Enum):
+    RUNNING = 0
+    WON = 1
+    LOST = -1
+
+
 class HangmanGame:
     missed_word_guesses = 0
     word_guessed_correctly = False
 
-    def __init__(self, word, allowed_guesses=10):
-        self.allowed_guesses = allowed_guesses
+    def __init__(self, word, allowed_misses=10):
+        self.allowed_misses = allowed_misses
         self.hangman = Hangman(word)
 
     def guess(self, character):
         self.hangman.guess(character)
+        return self.visual_state()
 
     def remaining_guesses(self):
-        return self.allowed_guesses - self.hangman.count_misses() - self.missed_word_guesses
+        return self.allowed_misses - self.hangman.count_misses() - self.missed_word_guesses
 
     def guess_word(self, word):
         self.word_guessed_correctly = self.hangman.guess_word(word)
@@ -49,4 +58,18 @@ class HangmanGame:
 
     def is_over(self):
         return self.hangman.count_open_letters() == 0 or self.remaining_guesses() <= 0 or self.word_guessed_correctly
+
+    def state(self):
+        if self.word_guessed_correctly:
+            return GameState.WON
+        elif self.allowed_misses >= self.missed_word_guesses:
+            return GameState.RUNNING
+        else:
+            return GameState.LOST
+    def _visual_score(self):
+        return ''.join(['O' if x < self.remaining_guesses() else 'Ø' for x in reversed(range(self.allowed_misses))])
+
+    def visual_state(self):
+        return f'{self.hangman.status()}\n{self._visual_score()}'
+
 
