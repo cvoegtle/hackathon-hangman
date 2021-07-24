@@ -38,7 +38,8 @@ class MyTestCase(unittest.TestCase):
         hangman.guess('A')
         self.assertEqual(3, hangman.count_misses())
         self.assertEqual(set('abc'), hangman.guesses)
-
+        hangman.guess('H')
+        self.assertEqual(3, hangman.count_misses())
         hangman.guess('e')
         self.assertEqual(3, hangman.count_misses())
 

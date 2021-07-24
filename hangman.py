@@ -16,7 +16,7 @@ class Hangman:
         return str.lower(guess) == str.lower(self.word)
 
     def count_misses(self):
-        return len(self.guesses-set(self.word))
+        return len(self.guesses-set(str.lower(self.word)))
 
     def count_open_letters(self):
         return self.status().count(PLACE_HOLDER)
