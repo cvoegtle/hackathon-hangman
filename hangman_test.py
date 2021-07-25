@@ -1,123 +1,130 @@
 import unittest
-from hangman import Hangman, GameState
-from hangman import HangmanGame
+from hangman import Hangman, SpielStatus
+from hangman import HangmanSpiel
 
 
 class MyTestCase(unittest.TestCase):
-    def test_initialStatus(self):
+    def test_ausgangszustand(self):
         hangman = Hangman("Hallo")
-        self.assertEqual('_____', hangman.status())
+        self.assertEqual('_____', hangman.zustand())
 
-    def test_wrong_guess(self):
+    def test_falscher_tipp(self):
         hangman = Hangman("Hello")
-        hangman.guess('a')
-        self.assertEqual('_____', hangman.status())
+        hangman.raten('a')
+        self.assertEqual('_____', hangman.zustand())
 
-    def test_good_guess(self):
+    def test_richtiger_tipp(self):
         hangman = Hangman("Hello")
-        hangman.guess('e')
-        self.assertEqual('_e___', hangman.status())
-        hangman.guess('l')
-        self.assertEqual('_ell_', hangman.status())
+        hangman.raten('e')
+        self.assertEqual('_e___', hangman.zustand())
+        hangman.raten('l')
+        self.assertEqual('_ell_', hangman.zustand())
 
-    def test_guess_case_insensitive(self):
+    def test_tips_grossschreibung_egal(self):
         hangman = Hangman('Hello')
-        hangman.guess('E')
-        self.assertEqual('_e___', hangman.status())
-        hangman.guess('h')
-        self.assertEqual('He___', hangman.status())
+        hangman.raten('E')
+        self.assertEqual('_e___', hangman.zustand())
+        hangman.raten('h')
+        self.assertEqual('He___', hangman.zustand())
 
-    def test_count_misses(self):
+    def test_fehler_zaehlen(self):
         hangman = Hangman('Hello')
-        hangman.guess('a')
-        self.assertEqual(1, hangman.count_misses())
-        hangman.guess('b')
-        self.assertEqual(2, hangman.count_misses())
-        hangman.guess('c')
-        self.assertEqual(3, hangman.count_misses())
-        hangman.guess('A')
-        self.assertEqual(3, hangman.count_misses())
-        self.assertEqual(set('abc'), hangman.guesses)
-        hangman.guess('H')
-        self.assertEqual(3, hangman.count_misses())
-        hangman.guess('e')
-        self.assertEqual(3, hangman.count_misses())
+        hangman.raten('a')
+        self.assertEqual(1, hangman.fehler_zaehlen())
+        hangman.raten('b')
+        self.assertEqual(2, hangman.fehler_zaehlen())
+        hangman.raten('c')
+        self.assertEqual(3, hangman.fehler_zaehlen())
+        hangman.raten('A')
+        self.assertEqual(3, hangman.fehler_zaehlen())
+        self.assertEqual(set('abc'), hangman.geratene_buchstaben)
+        hangman.raten('H')
+        self.assertEqual(3, hangman.fehler_zaehlen())
+        hangman.raten('e')
+        self.assertEqual(3, hangman.fehler_zaehlen())
 
-    def test_guess_word_miss(self):
-        game = HangmanGame('Hello')
-        game.guess('hallo')
-        state = game.state()
-        self.assertEqual(GameState.RUNNING, state)
-        self.assertEqual(game.allowed_misses - 1, game.remaining_guesses())
+    def test_falsches_wort(self):
+        spiel = HangmanSpiel('Hello')
+        spiel.raten('hallo')
+        state = spiel.status()
+        self.assertEqual(SpielStatus.LAUFEND, state)
+        self.assertEqual(spiel.anzahl_erlaubter_fehler - 1, spiel.verbleibende_versuche())
 
-    def test_guess_word_hit(self):
-        game = HangmanGame('Hello')
-        guess_successful = game.guess('hello')
-        self.assertTrue(guess_successful)
-        self.assertEqual(game.allowed_misses, game.remaining_guesses())
+    def test_richtiges_wort(self):
+        spiel = HangmanSpiel('Hello')
+        richtiger_tipp = spiel.raten('hello')
+        self.assertTrue(richtiger_tipp)
+        self.assertEqual(spiel.anzahl_erlaubter_fehler, spiel.verbleibende_versuche())
 
-    def test_remaining_guesses(self):
-        game = HangmanGame('Hello')
-        self.assertEqual(game.allowed_misses, game.remaining_guesses())
-        game.guess('e')
-        self.assertEqual(game.allowed_misses, game.remaining_guesses())
-        game.guess('a')
-        self.assertEqual(game.allowed_misses - 1, game.remaining_guesses())
+    def test_verbleibende_versuche(self):
+        spiel = HangmanSpiel('Hello')
+        self.assertEqual(spiel.anzahl_erlaubter_fehler, spiel.verbleibende_versuche())
+        spiel.raten('e')
+        self.assertEqual(spiel.anzahl_erlaubter_fehler, spiel.verbleibende_versuche())
+        spiel.raten('a')
+        self.assertEqual(spiel.anzahl_erlaubter_fehler - 1, spiel.verbleibende_versuche())
 
-    def test_game_over(self):
-        game = HangmanGame('Hello')
-        game.guess('e')
-        self.assertFalse(game.is_over())
-        game.guess('h')
-        game.guess('l')
-        game.guess('o')
-        self.assertTrue(game.is_over())
+    def test_spiel_zuende(self):
+        spiel = HangmanSpiel('Hello')
+        spiel.raten('e')
+        self.assertFalse(spiel.beendet())
+        spiel.raten('h')
+        spiel.raten('l')
+        spiel.raten('o')
+        self.assertTrue(spiel.beendet())
 
-    def test_game_over_word_guess(self):
-        game = HangmanGame('Hello')
-        game.guess('HELLO')
-        self.assertTrue(game.is_over())
+    def test_spiel_vorbei_durch_geratene_worte(self):
+        spiel = HangmanSpiel('Hello')
+        spiel.raten('HELLO')
+        self.assertTrue(spiel.beendet())
 
-    def test_game_over_too_many_misses(self):
-        game = HangmanGame('Hello', 5)
-        game.guess('a')
-        game.guess('b')
-        game.guess('c')
-        game.guess('d')
-        self.assertFalse(game.is_over())
-        game.guess('f')
-        self.assertTrue(game.is_over())
+    def test_spiel_beendet_durch_falsche_buchstaben(self):
+        spiel = HangmanSpiel('Hello', 5)
+        spiel.raten('a')
+        spiel.raten('b')
+        spiel.raten('c')
+        spiel.raten('d')
+        self.assertFalse(spiel.beendet())
+        spiel.raten('f')
+        self.assertTrue(spiel.beendet())
 
-    def test_game_state_running(self):
-        game = HangmanGame('Hello', 5)
-        self.assertEqual(GameState.RUNNING, game.state())
+    def test_spielstatus_laufend(self):
+        spiel = HangmanSpiel('Hello', 5)
+        self.assertEqual(SpielStatus.LAUFEND, spiel.status())
 
-    def test_game_state_won(self):
-        game = HangmanGame('Hello')
-        game.guess('HELLO')
-        self.assertEqual(GameState.WON, game.state())
+    def test_spielstatus_gewonnen(self):
+        spiel = HangmanSpiel('Hello')
+        spiel.raten('HELLO')
+        self.assertEqual(SpielStatus.GEWONNEN, spiel.status())
 
-    def test_game_won_by_character_guess(self):
-        game = HangmanGame('you')
-        game.guess('u')
-        game.guess('y')
-        game.guess('o')
-        self.assertEqual(GameState.WON, game.state())
+    def test_gewonnen_durch_geratene_buchstaben(self):
+        spiel = HangmanSpiel('you')
+        spiel.raten('u')
+        spiel.raten('y')
+        spiel.raten('o')
+        self.assertEqual(SpielStatus.GEWONNEN, spiel.status())
 
-    def test_game_state_lost(self):
-        game = HangmanGame('Hello', 0)
-        self.assertEqual(GameState.RUNNING, game.state())
-        game.guess('HELLa')
-        self.assertEqual(GameState.LOST, game.state())
+    def test_verloren_durch_geratene_buchstaben(self):
+        spiel = HangmanSpiel('you', 3)
+        spiel.raten('a')
+        spiel.raten('b')
+        spiel.raten('c')
+        self.assertEqual(SpielStatus.VERLOREN, spiel.status())
 
-    def test_visual_state_init(self):
-        game = HangmanGame('Hello', 10)
-        self.assertEqual('_____\nOOOOOOOOOO', game.visual_state())
+    def test_spielstatus_verloren(self):
+        spiel = HangmanSpiel('Hello', 1)
+        self.assertEqual(SpielStatus.LAUFEND, spiel.status())
+        spiel.raten('HELLa')
+        self.assertEqual(SpielStatus.VERLOREN, spiel.status())
 
-    def test_visual_state_running(self):
-        game = HangmanGame('Hello', 10)
-        game.guess('a')
-        self.assertEqual('_____\nØOOOOOOOOO', game.visual_state())
+    def test_spielstatus_als_text(self):
+        spiel = HangmanSpiel('Hello', 10)
+        self.assertEqual('_____\nOOOOOOOOOO', spiel.status_als_text())
+
+    def test_spiel_status_laufend(self):
+        spiel = HangmanSpiel('Hello', 10)
+        spiel.raten('a')
+        self.assertEqual('_____\nØOOOOOOOOO', spiel.status_als_text())
 
 
 if __name__ == '__main__':

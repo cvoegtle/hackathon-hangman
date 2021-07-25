@@ -14,3 +14,9 @@ Der Spieler hat eine erlaubte Anzahl Fehlversuche. Sollte er das Wort vorher err
 Groß- und Kleinschreibung wird nicht unterschieden. Umlaute und ß müssen erraten werden.
 
 
+## Spielen
+
+um zu spielen Python starten und folgendes eingeben:
+```bash
+python3 hangman.py
+```

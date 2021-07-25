@@ -1,106 +1,101 @@
 import os
 from enum import Enum
+from getpass import getpass
 
-PLACE_HOLDER = '_'
+PLATZ_HALTER = '_'
 
 
 class Hangman:
-    def __init__(self, word):
-        self.word = word
-        self.guesses = set()
+    def __init__(self, wort):
+        self.ziel_wort = wort
+        self.geratene_buchstaben = set()
 
-    def guess(self, character):
-        self.guesses.add(str.lower(character))
+    def raten(self, tipp):
+        self.geratene_buchstaben.add(str.lower(tipp))
 
-    def guess_word(self, guess):
-        return str.lower(guess) == str.lower(self.word)
+    def wort_raten(self, ganzes_wort):
+        return str.lower(ganzes_wort) == str.lower(self.ziel_wort)
 
-    def count_misses(self):
-        return len(self.guesses-set(str.lower(self.word)))
+    def fehler_zaehlen(self):
+        return len(self.geratene_buchstaben - set(str.lower(self.ziel_wort)))
 
-    def count_open_letters(self):
-        return self.status().count(PLACE_HOLDER)
+    def fehlende_buchstaben(self):
+        return self.zustand().count(PLATZ_HALTER)
 
-    def status(self):
-        return ''.join([self._make_visible(x) for x in self.word])
+    def zustand(self):
+        return ''.join([self._sichtbar_machen(x) for x in self.ziel_wort])
 
-    def _make_visible(self, character):
-        if str.lower(character) in self.guesses:
+    def _sichtbar_machen(self, character):
+        if str.lower(character) in self.geratene_buchstaben:
             return character
         else:
-            return PLACE_HOLDER
+            return PLATZ_HALTER
 
 
-class GameState(Enum):
-    RUNNING = 0
-    WON = 1
-    LOST = -1
+class SpielStatus(Enum):
+    LAUFEND = 0
+    GEWONNEN = 1
+    VERLOREN = -1
 
 
-class HangmanGame:
-    missed_word_guesses = 0
-    word_guessed_correctly = False
+class HangmanSpiel:
+    wort_rate_fehlschlaege = 0
+    wort_erraten = False
 
-    def __init__(self, word, allowed_misses=10):
-        self.allowed_misses = allowed_misses
-        self.hangman = Hangman(word)
+    def __init__(self, wort, anzahl_erlaubter_fehler=10):
+        self.anzahl_erlaubter_fehler = anzahl_erlaubter_fehler
+        self.hangman = Hangman(wort)
 
-    def guess(self, guess_input):
-        if guess_input is None or guess_input == '':
+    def raten(self, eingabe):
+        if eingabe is None or eingabe == '':
             pass
-        elif len(guess_input) == 1:
-            self.hangman.guess(guess_input)
+        elif len(eingabe) == 1:
+            self.hangman.raten(eingabe)
         else:
-            self._guess_word(guess_input)
+            self._wort_raten(eingabe)
 
-        return self.visual_state()
+        return self.status_als_text()
 
-    def remaining_guesses(self):
-        return self.allowed_misses - self.hangman.count_misses() - self.missed_word_guesses
+    def verbleibende_versuche(self):
+        return self.anzahl_erlaubter_fehler - self.hangman.fehler_zaehlen() - self.wort_rate_fehlschlaege
 
-    def _guess_word(self, word):
-        self.word_guessed_correctly = self.hangman.guess_word(word)
-        if not self.word_guessed_correctly:
-            self.missed_word_guesses += 1
+    def _wort_raten(self, word):
+        self.wort_erraten = self.hangman.wort_raten(word)
+        if not self.wort_erraten:
+            self.wort_rate_fehlschlaege += 1
 
-    def is_over(self):
-        return self.hangman.count_open_letters() == 0 or self.remaining_guesses() <= 0 or self.word_guessed_correctly
+    def beendet(self):
+        return self.hangman.fehlende_buchstaben() == 0 or self.verbleibende_versuche() <= 0 or self.wort_erraten
 
-    def state(self):
-        if self.word_guessed_correctly or self.hangman.count_open_letters() == 0:
-            return GameState.WON
-        elif self.allowed_misses >= self.missed_word_guesses:
-            return GameState.RUNNING
+    def status(self):
+        if self.wort_erraten or self.hangman.fehlende_buchstaben() == 0:
+            return SpielStatus.GEWONNEN
+        elif self.verbleibende_versuche() > 0:
+            return SpielStatus.LAUFEND
         else:
-            return GameState.LOST
+            return SpielStatus.VERLOREN
 
-    def _visual_score(self):
-        return ''.join(['O' if x < self.remaining_guesses() else 'Ø' for x in reversed(range(self.allowed_misses))])
+    def _spielstand_als_text(self):
+        return ''.join(['O' if x < self.verbleibende_versuche() else 'Ø' for x in reversed(range(self.anzahl_erlaubter_fehler))])
 
-    def visual_state(self):
-        return f'{self.hangman.status()}\n{self._visual_score()}'
+    def status_als_text(self):
+        return f'{self.hangman.zustand()}\n{self._spielstand_als_text()}'
 
 
-def play(word):
-    clear_screen()
-    game = HangmanGame(word)
-    while game.state() == GameState.RUNNING:
-        guess = input()
-        state_visualisation = game.guess(guess)
-        print(state_visualisation)
+def spielen(wort):
+    spiel = HangmanSpiel(wort)
+    print(spiel.status_als_text())
+    while spiel.status() == SpielStatus.LAUFEND:
+        eingabe = input('Dein Tipp:')
+        spielstand_anzeige = spiel.raten(eingabe)
+        print(spielstand_anzeige)
 
-    if game.state() == GameState.WON:
+    if spiel.status() == SpielStatus.GEWONNEN:
         print('Gewonnen!')
     else:
-        print('Versuch es noch einmal')
+        print(f'gesucht war {wort}. Versuch es noch einmal')
 
 
-def clear_screen():
-    # for mac and linux(here, os.name is 'posix')
-    if os.name == 'posix':
-        _ = os.system('clear')
-    else:
-        # for windows platfrom
-        _ = os.system('cls')
-    # print out some text
-
+if __name__ == '__main__':
+    wort = getpass('gesuchtes Wort:')
+    spielen(wort)
