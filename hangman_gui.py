@@ -40,16 +40,20 @@ class HangmanGui(tk.Frame):
 
         self.frame_status = tk.Frame(self)
         self.frame_status.pack(side=tk.TOP)
-        self.label_status = tk.Label(self.frame_status, text=self.hangman.status())
+        self.label_status = tk.Label(self.frame_status, text=self.hangman.status_als_text())
         self.label_status.pack(side=tk.RIGHT)
 
     def raten(self, event):
         spielstand = self.hangman.raten(self.tipp.get())
         self.label_status['text'] = spielstand
+        self.tipp.set('')
 
         if self.hangman.status() == SpielStatus.LAUFEND:
-            self.tipp.set('')
             self.entry_tipp.focus()
+        else:
+            button_text = "Gewonnen" if self.hangman.status() == SpielStatus.GEWONNEN else "Knapp verloren!"
+            button_schliessen = tk.Button(self, text=button_text, command=self.master.destroy)
+            button_schliessen.pack(side=tk.TOP)
 
 
 root = tk.Tk()
