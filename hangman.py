@@ -97,5 +97,5 @@ def spielen(wort):
 
 
 if __name__ == '__main__':
-    wort = getpass('gesuchtes Wort:')
+    wort = getpass('Gesuchtes Wort:')
     spielen(wort)
